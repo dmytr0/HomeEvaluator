@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Evaluator - Оцінка будинків</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .results-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .score-cell {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .score-high {
+            color: #28a745;
+        }
+        
+        .score-medium {
+            color: #ffc107;
+        }
+        
+        .score-low {
+            color: #dc3545;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .progress-high {
+            background: linear-gradient(90deg, #28a745, #20c997);
+        }
+        
+        .progress-medium {
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+        }
+        
+        .progress-low {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+        
+        .weight-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .weight-item input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .house-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .house-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+        }
+        
+        .house-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .house-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+        }
+        
+        .house-score {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .house-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .detail-item {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Home Evaluator</h1>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab(event, 'evaluate')">Оцінити будинок</button>
+            <button class="tab-button" onclick="showTab(event, 'compare')">Порівняти будинки</button>
+            <button class="tab-button" onclick="showTab(event, 'weights')">Налаштування ваг</button>
+            <button class="tab-button" onclick="showTab(event, 'results')">Останні результати</button>
+        </div>
+        
+        <!-- Tab 1: Оцінити будинок -->
+        <div id="evaluate" class="tab-content active">
+            <div class="card">
+                <h2>➕ Додати будинок для оцінки</h2>
+                <form id="houseForm" onsubmit="addHouse(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Назва будинку *</label>
+                            <input type="text" class="form-input" id="houseName" placeholder="Мій будинок" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Ціна ($) *</label>
+                            <input type="number" class="form-input" id="housePrice" placeholder="100000" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Площа (м²) *</label>
+                            <input type="number" class="form-input" id="houseArea" placeholder="100" required min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Стан будинку</label>
+                            <select class="form-input" id="houseCondition">
+                                <option value="excellent">Відмінний</option>
+                                <option value="good" selected>Хороший</option>
+                                <option value="average">Середній</option>
+                                <option value="old">Старий</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Оцінка розташування (1-10)</label>
+                            <input type="number" class="form-input" id="houseLocation" placeholder="7" min="1" max="10" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label>Рік побудови</label>
+                            <input type="number" class="form-input" id="houseYear" placeholder="2000" min="1900" max="2024">
+                        </div>
+                        <div class="form-group">
+                            <label>Кількість поверхів</label>
+                            <input type="number" class="form-input" id="houseFloors" placeholder="1" min="1" value="1">
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0 10px 0; color: #333;">Комунікації</h3>
+                    <div class="form-row">
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasGas" checked>
+                            <label for="hasGas">Газ</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasWater" checked>
+                            <label for="hasWater">Вода</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasSewer" checked>
+                            <label for="hasSewer">Каналізація</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasElectricity" checked>
+                            <label for="hasElectricity">Електрика</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasHeating" checked>
+                            <label for="hasHeating">Опалення</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasBathroom" checked>
+                            <label for="hasBathroom">Ванна кімната</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasKitchen" checked>
+                            <label for="hasKitchen">Кухня</label>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0 10px 0; color: #333;">Додаткові опції</h3>
+                    <div class="form-row">
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasGarden">
+                            <label for="hasGarden">Сад</label>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="hasGarage">
+                            <label for="hasGarage">Гараж</label>
+                        </div>
+                        <div class="form-group">
+                            <label>Відстань до міста (км)</label>
+                            <input type="number" class="form-input" id="houseDistance" placeholder="10" min="0">
+                        </div>
+                    </div>
+                    
+                    <div id="customParamsForm"></div>
+                    
+                    <div class="form-row" style="margin-top: 20px;">
+                        <button type="submit" class="btn">➕ Додати будинок</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm()">Очистити</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="card" id="singleResult" style="display: none;">
+                <h2>📊 Результат оцінки</h2>
+                <div id="singleResultContent"></div>
+            </div>
+        </div>
+        
+        <!-- Tab 2: Порівняти будинки -->
+        <div id="compare" class="tab-content">
+            <div class="card">
+                <h2>📋 Список будинків для порівняння</h2>
+                <div id="housesList"></div>
+                <button class="btn" onclick="compareHouses()" style="margin-top: 20px;">🔄 Порівняти всі будинки</button>
+                <button class="btn btn-secondary" onclick="clearAllHouses()" style="margin-top: 20px; margin-left: 10px;">🗑️ Очистити все</button>
+            </div>
+            
+            <div class="card" id="comparisonResult" style="display: none;">
+                <h2>🏆 Результати порівняння</h2>
+                <div id="comparisonContent"></div>
+            </div>
+        </div>
+        
+        <!-- Tab 3: Налаштування ваг -->
+        <div id="weights" class="tab-content">
+            <div class="card">
+                <h2>⚙️ Налаштування вагових коефіцієнтів</h2>
+                
+                <div class="info-box">
+                    <h3>ℹ️ Як працює система ваг</h3>
+                    <p><strong>Кожен параметр має ваговий коефіцієнт.</strong> Чим вищий коефіцієнт, тим важливіший параметр для фінального балу.</p>
+                    <p><strong>Формула:</strong> (сума вагових балів) / (сума всіх ваг) × 100</p>
+                    <p><strong>Якщо параметр не вказано:</strong> він отримує значення за замовчуванням (False для булевих, 0 для числових, перший варіант для вибору).</p>
+                    <p><strong>Приклад:</strong> Якщо ви хочете, щоб ціна була найважливішою, збільште її вагу до 30-40.</p>
+                </div>
+                
+                <h3>Основні параметри</h3>
+                <div id="weightsList"></div>
+                
+                <div class="form-row" style="margin-top: 20px;">
+                    <button class="btn" onclick="saveWeights()">💾 Зберегти ваги</button>
+                    <button class="btn btn-secondary" onclick="resetWeights()">🔄 Скинути до стандартних</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>➕ Додати новий параметр</h2>
+                <div class="info-box">
+                    <h3>ℹ️ Як додати новий параметр</h3>
+                    <p><strong>1.</strong> Введіть назву параметра (наприклад: <code>has_pool</code>, <code>energy_efficiency</code>)</p>
+                    <p><strong>2.</strong> Вкажіть вагу (наскільки важливий цей параметр)</p>
+                    <p><strong>3.</strong> Оберіть тип параметра:</p>
+                    <ul>
+                        <li><strong>Логічний (так/ні):</strong> Параметр типу так/ні (наприклад, наявність басейну)</li>
+                        <li><strong>Числовий:</strong> Числове значення (наприклад, рейтинг енергоефективності)</li>
+                        <li><strong>Вибір зі списку:</strong> Оберіть з декількох варіантів</li>
+                    </ul>
+                    <p><strong>4.</strong> Після додавання, параметр з'явиться у формі додавання будинку</p>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Назва параметра (латиницею, без пробілів)</label>
+                        <input type="text" class="form-input" id="newParamName" placeholder="has_pool">
+                    </div>
+                    <div class="form-group">
+                        <label>Вага</label>
+                        <input type="number" class="form-input" id="newParamWeight" placeholder="5.0" step="0.1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Тип</label>
+                        <select class="form-input" id="newParamType">
+                            <option value="bool">Логічний (так/ні)</option>
+                            <option value="float">Числовий</option>
+                            <option value="select">Вибір зі списку</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="addCustomParameter()" style="margin-top: 10px;">➕ Додати параметр</button>
+                <div id="customParamsList" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+        
+        <!-- Tab 4: Останні результати -->
+        <div id="results" class="tab-content">
+            <div class="card">
+                <h2>📈 Останні оцінки</h2>
+                <div id="resultsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Зберігання будинків
+        let houses = JSON.parse(localStorage.getItem('houses') || '[]');
+        
+        // Зберігання ваг
+        let weights = JSON.parse(localStorage.getItem('weights') || `{
+            "price_weight": 15.0,
+            "area_weight": 10.0,
+            "gas_weight": 8.0,
+            "water_weight": 8.0,
+            "sewer_weight": 7.0,
+            "electricity_weight": 5.0,
+            "heating_weight": 10.0,
+            "bathroom_weight": 10.0,
+            "kitchen_weight": 5.0,
+            "condition_weight": 10.0,
+            "location_weight": 10.0,
+            "garden_weight": 2.0,
+            "garage_weight": 3.0,
+            "year_weight": 5.0,
+            "floors_weight": 2.0,
+            "distance_weight": 5.0
+        }`);
+        
+        // Кастомні параметри
+        let customParams = JSON.parse(localStorage.getItem('customParams') || '[]');
+        
+        // Останні результати
+        let resultsHistory = JSON.parse(localStorage.getItem('resultsHistory') || '[]');
+        
+        // Поточна мова
+        let currentLang = 'uk';
+        
+        // Переклад
+        const translations = {
+            'uk': {
+                'excellent': 'Відмінний',
+                'good': 'Хороший',
+                'average': 'Середній',
+                'old': 'Старий'
+            },
+            'en': {
+                'excellent': 'Excellent',
+                'good': 'Good',
+                'average': 'Average',
+                'old': 'Old'
+            }
+        };
+        
+        // Показати вкладку
+        function showTab(event, tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Оновлюємо вміст
+            if (tabName === 'evaluate') {
+                renderCustomParamsForm();
+            } else if (tabName === 'compare') {
+                renderHousesList();
+            } else if (tabName === 'weights') {
+                renderWeights();
+                renderCustomParamsList();
+            } else if (tabName === 'results') {
+                renderResultsHistory();
+            }
+        }
+        
+        // Додати будинок
+        function addHouse(event) {
+            event.preventDefault();
+            
+            const house = {
+                name: document.getElementById('houseName').value,
+                price: parseFloat(document.getElementById('housePrice').value),
+                area: parseFloat(document.getElementById('houseArea').value),
+                condition: document.getElementById('houseCondition').value,
+                location_rating: parseInt(document.getElementById('houseLocation').value) || 5,
+                year_built: document.getElementById('houseYear').value ? parseInt(document.getElementById('houseYear').value) : null,
+                floors: parseInt(document.getElementById('houseFloors').value) || 1,
+                has_gas: document.getElementById('hasGas').checked,
+                has_water: document.getElementById('hasWater').checked,
+                has_sewer: document.getElementById('hasSewer').checked,
+                has_electricity: document.getElementById('hasElectricity').checked,
+                has_heating: document.getElementById('hasHeating').checked,
+                has_bathroom: document.getElementById('hasBathroom').checked,
+                has_kitchen: document.getElementById('hasKitchen').checked,
+                has_garden: document.getElementById('hasGarden').checked,
+                has_garage: document.getElementById('hasGarage').checked,
+                distance_to_city: document.getElementById('houseDistance').value ? parseFloat(document.getElementById('houseDistance').value) : null
+            };
+            
+            // Додаємо кастомні параметри
+            customParams.forEach(param => {
+                const input = document.getElementById(`custom_${param.name}`);
+                if (input) {
+                    if (param.type === 'bool') {
+                        house[param.name] = input.checked;
+                    } else if (param.type === 'float') {
+                        house[param.name] = input.value ? parseFloat(input.value) : null;
+                    } else {
+                        house[param.name] = input.value;
+                    }
+                }
+            });
+            
+            houses.push(house);
+            localStorage.setItem('houses', JSON.stringify(houses));
+            
+            // Оцінюємо будинок
+            evaluateSingleHouse(house);
+            
+            // Очищаємо форму
+            clearForm();
+            
+            // Оновлюємо список
+            renderHousesList();
+        }
+        
+        // Оцінити один будинок
+        function evaluateSingleHouse(house) {
+            fetch('/evaluate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    house: house,
+                    weights: weights,
+                    custom_params: customParams
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                displaySingleResult(data);
+                
+                // Зберігаємо в історію
+                resultsHistory.unshift({
+                    house: house,
+                    result: data,
+                    timestamp: new Date().toISOString()
+                });
+                if (resultsHistory.length > 10) {
+                    resultsHistory.pop();
+                }
+                localStorage.setItem('resultsHistory', JSON.stringify(resultsHistory));
+            });
+        }
+        
+        // Відобразити результат оцінки одного будинку
+        function displaySingleResult(data) {
+            const resultDiv = document.getElementById('singleResult');
+            const contentDiv = document.getElementById('singleResultContent');
+            
+            let html = `
+                <div class="house-header">
+                    <div class="house-name">${data.house_name}</div>
+                    <div class="house-score ${getScoreClass(data.final_score)}">${data.final_score.toFixed(2)}/100</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${getScoreClass(data.final_score)}" style="width: ${data.final_score}%"></div>
+                </div>
+                
+                <h3 style="margin-top: 20px;">Детальний розрахунок:</h3>
+                <table class="results-table">
+                    <tr>
+                        <th>Параметр</th>
+                        <th>Значення</th>
+                        <th>Бал</th>
+                        <th>Вага</th>
+                        <th>Ваговий бал</th>
+                    </tr>
+            `;
+            
+            // Сортуємо параметри за ваговим балом
+            const sortedScores = Object.entries(data.scores).sort((a, b) => b[1].weighted - a[1].weighted);
+            
+            for (const [factor, info] of sortedScores) {
+                let displayValue = info.value;
+                if (typeof info.value === 'boolean') {
+                    displayValue = info.value ? '✅ Так' : '❌ Ні';
+                } else if (info.value === null || info.value === undefined) {
+                    displayValue = '<span style="color: #666;">➖ Не вказано</span>';
+                } else if (factor === 'condition') {
+                    displayValue = translations[currentLang][info.value] || info.value;
+                }
+                
+                // Отримуємо вагу параметра
+                const weightKey = factor.endsWith('_weight') ? factor : `${factor}_weight`;
+                const paramWeight = weights[weightKey] || info.weighted / (info.score || 1);
+                
+                html += `
+                    <tr>
+                        <td>${formatFactorName(factor)}</td>
+                        <td>${displayValue}</td>
+                        <td>${(info.score * 100).toFixed(1)}%</td>
+                        <td>${paramWeight.toFixed(1)}</td>
+                        <td>${info.weighted.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+            
+            html += `
+                </table>
+                <p style="margin-top: 20px; font-weight: bold;">
+                    Сума вагових балів: ${data.total_weighted.toFixed(2)}<br>
+                    Сумарна вага: ${data.total_weight.toFixed(2)}
+                </p>
+            `;
+            
+            contentDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+            
+            // Прокручуємо до результату
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Порівняти будинки
+        function compareHouses() {
+            if (houses.length === 0) {
+                alert('Додайте хоча б один будинок для порівняння!');
+                return;
+            }
+            
+            fetch('/compare', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    houses: houses,
+                    weights: weights,
+                    custom_params: customParams
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayComparisonResult(data);
+            });
+        }
+        
+        // Відобразити результат порівняння
+        function displayComparisonResult(data) {
+            const resultDiv = document.getElementById('comparisonResult');
+            const contentDiv = document.getElementById('comparisonContent');
+            
+            let html = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Назва будинку</th>
+                            <th>Ціна</th>
+                            <th>Площа</th>
+                            <th>Фінальний бал</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach((item, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${item.house_name}</strong></td>
+                        <td>$${item.house.price.toLocaleString()}</td>
+                        <td>${item.house.area} м²</td>
+                        <td class="score-cell ${getScoreClass(item.final_score)}">${item.final_score.toFixed(2)}/100</td>
+                        <td>
+                            <button class="btn" onclick="viewHouseDetails(${houses.findIndex(h => h.name === item.house_name)})" style="padding: 6px 12px; font-size: 12px;">👁️ Дивитися</button>
+                            <button class="btn btn-secondary" onclick="removeHouse(${houses.findIndex(h => h.name === item.house_name)})" style="padding: 6px 12px; font-size: 12px; background: #dc3545;">🗑️ Видалити</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            contentDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+        
+        // Переглянути деталі будинку
+        function viewHouseDetails(index) {
+            const house = houses[index];
+            evaluateSingleHouse(house);
+            showTab(event, 'evaluate');
+            document.querySelectorAll('.tab-button')[0].classList.add('active');
+        }
+        
+        // Видалити будинок
+        function removeHouse(index) {
+            if (confirm('Ви впевнені, що хочете видалити цей будинок?')) {
+                houses.splice(index, 1);
+                localStorage.setItem('houses', JSON.stringify(houses));
+                renderHousesList();
+                compareHouses();
+            }
+        }
+        
+        // Очистити всі будинки
+        function clearAllHouses() {
+            if (confirm('Ви впевнені, що хочете видалити всі будинки?')) {
+                houses = [];
+                localStorage.setItem('houses', JSON.stringify(houses));
+                renderHousesList();
+                document.getElementById('comparisonResult').style.display = 'none';
+            }
+        }
+        
+        // Відобразити список будинків
+        function renderHousesList() {
+            const listDiv = document.getElementById('housesList');
+            
+            if (houses.length === 0) {
+                listDiv.innerHTML = '<p style="color: #666; text-align: center;">Немає будинків для порівняння. Додайте будинки у вкладці "Оцінити будинок".</p>';
+                return;
+            }
+            
+            let html = '<h3>Список будинків:</h3>';
+            houses.forEach((house, index) => {
+                html += `
+                    <div class="house-card">
+                        <div class="house-header">
+                            <div class="house-name">${house.name}</div>
+                            <button class="btn btn-secondary" onclick="removeHouse(${index})" style="padding: 6px 12px; font-size: 12px; background: #dc3545;">🗑️</button>
+                        </div>
+                        <div class="house-details">
+                            <div class="detail-item"><span class="detail-label">Ціна:</span> $${house.price.toLocaleString()}</div>
+                            <div class="detail-item"><span class="detail-label">Площа:</span> ${house.area} м²</div>
+                            <div class="detail-item"><span class="detail-label">Стан:</span> ${translations[currentLang][house.condition] || house.condition}</div>
+                            <div class="detail-item"><span class="detail-label">Розташування:</span> ${house.location_rating}/10</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            listDiv.innerHTML = html;
+        }
+        
+        // Відобразити налаштування ваг
+        function renderWeights() {
+            const weightsList = document.getElementById('weightsList');
+            
+            const weightNames = {
+                'price_weight': 'Ціна',
+                'area_weight': 'Площа',
+                'gas_weight': 'Газ',
+                'water_weight': 'Вода',
+                'sewer_weight': 'Каналізація',
+                'electricity_weight': 'Електрика',
+                'heating_weight': 'Опалення',
+                'bathroom_weight': 'Ванна кімната',
+                'kitchen_weight': 'Кухня',
+                'condition_weight': 'Стан будинку',
+                'location_weight': 'Розташування',
+                'garden_weight': 'Сад',
+                'garage_weight': 'Гараж',
+                'year_weight': 'Рік побудови',
+                'floors_weight': 'Кількість поверхів',
+                'distance_weight': 'Відстань до міста'
+            };
+            
+            let html = '';
+            for (const [key, value] of Object.entries(weights)) {
+                if (key.endsWith('_weight')) {
+                    const name = weightNames[key] || key.replace('_weight', '');
+                    html += `
+                        <div class="weight-item">
+                            <span>${name}</span>
+                            <input type="number" id="weight_${key}" value="${value}" step="0.1" min="0" onchange="updateWeight('${key}', this.value)">
+                        </div>
+                    `;
+                }
+            }
+            
+            weightsList.innerHTML = html;
+        }
+        
+        // Оновити вагу
+        function updateWeight(key, value) {
+            weights[key] = parseFloat(value);
+            localStorage.setItem('weights', JSON.stringify(weights));
+        }
+        
+        // Зберегти ваги
+        function saveWeights() {
+            localStorage.setItem('weights', JSON.stringify(weights));
+            alert('Вага збережені!');
+        }
+        
+        // Скинути ваги до стандартних
+        function resetWeights() {
+            weights = {
+                "price_weight": 15.0,
+                "area_weight": 10.0,
+                "gas_weight": 8.0,
+                "water_weight": 8.0,
+                "sewer_weight": 7.0,
+                "electricity_weight": 5.0,
+                "heating_weight": 10.0,
+                "bathroom_weight": 10.0,
+                "kitchen_weight": 5.0,
+                "condition_weight": 10.0,
+                "location_weight": 10.0,
+                "garden_weight": 2.0,
+                "garage_weight": 3.0,
+                "year_weight": 5.0,
+                "floors_weight": 2.0,
+                "distance_weight": 5.0
+            };
+            localStorage.setItem('weights', JSON.stringify(weights));
+            renderWeights();
+            alert('Вага скинуті до стандартних!');
+        }
+        
+        // Додати кастомний параметр
+        function addCustomParameter() {
+            const name = document.getElementById('newParamName').value.trim();
+            const weight = parseFloat(document.getElementById('newParamWeight').value) || 5.0;
+            const type = document.getElementById('newParamType').value;
+            
+            if (!name) {
+                alert('Введіть назву параметра!');
+                return;
+            }
+            
+            // Перевіряємо, чи не існує вже такий параметр
+            if (customParams.some(p => p.name === name)) {
+                alert('Параметр з такою назвою вже існує!');
+                return;
+            }
+            
+            // Додаємо вагу для нового параметра
+            weights[`${name}_weight`] = weight;
+            
+            customParams.push({
+                name: name,
+                weight: weight,
+                type: type,
+                options: type === 'select' ? ['низький', 'середній', 'високий'] : []
+            });
+            
+            localStorage.setItem('customParams', JSON.stringify(customParams));
+            localStorage.setItem('weights', JSON.stringify(weights));
+            
+            // Оновлюємо форму додавання будинку
+            renderCustomParamsForm();
+            
+            // Оновлюємо список ваг
+            renderWeights();
+            
+            // Оновлюємо список кастомних параметрів
+            renderCustomParamsList();
+            
+            // Очищаємо форму
+            document.getElementById('newParamName').value = '';
+            document.getElementById('newParamWeight').value = '';
+            
+            alert(`Параметр "${name}" додано!`);
+        }
+        
+        // Відобразити форму для кастомних параметрів
+        function renderCustomParamsForm() {
+            const formDiv = document.getElementById('customParamsForm');
+            
+            if (customParams.length === 0) {
+                formDiv.innerHTML = '';
+                return;
+            }
+            
+            let html = '<h3 style="margin: 20px 0 10px 0; color: #333;">Кастомні параметри</h3><div class="form-row">';
+            
+            customParams.forEach(param => {
+                if (param.type === 'bool') {
+                    html += `
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="custom_${param.name}">
+                            <label for="custom_${param.name}">${param.name}</label>
+                        </div>
+                    `;
+                } else if (param.type === 'float') {
+                    html += `
+                        <div class="form-group">
+                            <label>${param.name}</label>
+                            <input type="number" class="form-input" id="custom_${param.name}" placeholder="0" step="0.1">
+                        </div>
+                    `;
+                } else if (param.type === 'select') {
+                    html += `
+                        <div class="form-group">
+                            <label>${param.name}</label>
+                            <select class="form-input" id="custom_${param.name}">
+                                ${param.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            formDiv.innerHTML = html;
+        }
+        
+        // Відобразити список кастомних параметрів
+        function renderCustomParamsList() {
+            const listDiv = document.getElementById('customParamsList');
+            
+            if (customParams.length === 0) {
+                listDiv.innerHTML = '';
+                return;
+            }
+            
+            let html = '<h3 style="margin-top: 20px;">Список кастомних параметрів:</h3>';
+            
+            customParams.forEach(param => {
+                html += `
+                    <div class="house-card">
+                        <div class="house-header">
+                            <div class="house-name">${param.name} (${param.type})</div>
+                            <button class="btn btn-secondary" onclick="removeCustomParam('${param.name}')" style="padding: 6px 12px; font-size: 12px; background: #dc3545;">🗑️</button>
+                        </div>
+                        <div class="house-details">
+                            <div class="detail-item"><span class="detail-label">Вага:</span> ${weights[`${param.name}_weight`] || param.weight}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            listDiv.innerHTML = html;
+        }
+        
+        // Видалити кастомний параметр
+        function removeCustomParam(name) {
+            if (confirm(`Ви впевнені, що хочете видалити параметр "${name}"?`)) {
+                customParams = customParams.filter(p => p.name !== name);
+                delete weights[`${name}_weight`];
+                
+                localStorage.setItem('customParams', JSON.stringify(customParams));
+                localStorage.setItem('weights', JSON.stringify(weights));
+                
+                renderWeights();
+                renderCustomParamsForm();
+                renderCustomParamsList();
+            }
+        }
+        
+        // Відобразити історію результатів
+        function renderResultsHistory() {
+            const resultsList = document.getElementById('resultsList');
+            
+            if (resultsHistory.length === 0) {
+                resultsList.innerHTML = '<p style="color: #666; text-align: center;">Немає збережених результатів.</p>';
+                return;
+            }
+            
+            let html = '';
+            resultsHistory.forEach((item, index) => {
+                const date = new Date(item.timestamp);
+                html += `
+                    <div class="house-card">
+                        <div class="house-header">
+                            <div class="house-name">${item.house.name}</div>
+                            <span class="badge ${getScoreClass(item.result.final_score)}">${item.result.final_score.toFixed(2)}/100</span>
+                        </div>
+                        <div style="margin-top: 10px; color: #666; font-size: 14px;">
+                            Оцінено: ${date.toLocaleDateString('uk-UA')} ${date.toLocaleTimeString('uk-UA')}
+                        </div>
+                        <div class="house-details" style="margin-top: 10px;">
+                            <div class="detail-item"><span class="detail-label">Ціна:</span> $${item.house.price.toLocaleString()}</div>
+                            <div class="detail-item"><span class="detail-label">Площа:</span> ${item.house.area} м²</div>
+                            <div class="detail-item"><span class="detail-label">Стан:</span> ${translations[currentLang][item.house.condition] || item.house.condition}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsList.innerHTML = html;
+        }
+        
+        // Очистити форму
+        function clearForm() {
+            document.getElementById('houseForm').reset();
+            // Очищаємо кастомні параметри
+            customParams.forEach(param => {
+                const input = document.getElementById(`custom_${param.name}`);
+                if (input) {
+                    if (param.type === 'bool') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                }
+            });
+            document.getElementById('singleResult').style.display = 'none';
+        }
+        
+        // Допоміжні функції
+        function getScoreClass(score) {
+            if (score >= 80) return 'score-high';
+            if (score >= 50) return 'score-medium';
+            return 'score-low';
+        }
+        
+        function formatFactorName(name) {
+            const names = {
+                'price': 'Ціна',
+                'area': 'Площа',
+                'has_gas': 'Газ',
+                'has_water': 'Вода',
+                'has_sewer': 'Каналізація',
+                'has_electricity': 'Електрика',
+                'has_heating': 'Опалення',
+                'has_bathroom': 'Ванна кімната',
+                'has_kitchen': 'Кухня',
+                'condition': 'Стан будинку',
+                'location_rating': 'Розташування',
+                'year_built': 'Рік побудови',
+                'floors': 'Кількість поверхів',
+                'has_garden': 'Сад',
+                'has_garage': 'Гараж',
+                'distance_to_city': 'Відстань до міста'
+            };
+            return names[name] || name;
+        }
+        
+        // Ініціалізація
+        window.onload = function() {
+            renderHousesList();
+            renderWeights();
+            renderResultsHistory();
+            renderCustomParamsForm();
+            renderCustomParamsList();
+        };
+    </script>
+</body>
+</html>

@@ -190,9 +190,14 @@ class HomeEvaluator:
         """Оцінка стану будинку"""
         return self.CONDITION_SCORES.get(condition.lower(), 0.2)
     
-    def evaluate_house(self, house: House) -> Dict:
+    def evaluate_house(self, house: House, custom_params: Optional[List[Dict]] = None, custom_weights: Optional[Dict] = None) -> Dict:
         """
         Оцінка будинку за всіма факторами
+        
+        Args:
+            house: Будинок для оцінки
+            custom_params: Список кастомних параметрів (опціонально)
+            custom_weights: Словник з кастомними вагами (опціонально)
         
         Returns:
             Dict з детальним розрахунком і фінальним балом
@@ -308,9 +313,27 @@ class HomeEvaluator:
             "weighted": distance_score * self.weights.distance_weight
         }
         
+        # Додаємо кастомні параметри
+        if custom_params:
+            custom_scores = self._evaluate_custom_params(house, custom_params, custom_weights or {})
+            scores.update(custom_scores)
+            
+            # Оновлюємо ваги з кастомними
+            if custom_weights:
+                for param_name, param_data in custom_weights.items():
+                    if param_name.endswith('_weight'):
+                        # Додаємо вагу до загальної суми
+                        pass  # Ваги вже враховані у custom_scores
+        
         # Сумарний ваговий бал
         total_weighted = sum(s["weighted"] for s in scores.values())
         total_weight = self.weights.total_weight()
+        
+        # Додаємо ваги кастомних параметрів
+        if custom_weights:
+            for param_name, weight_value in custom_weights.items():
+                if param_name.endswith('_weight'):
+                    total_weight += weight_value
         
         # Фінальний бал від 0 до 100
         final_score = (total_weighted / total_weight) * 100 if total_weight > 0 else 0
@@ -323,22 +346,92 @@ class HomeEvaluator:
             "final_score": round(final_score, 2)
         }
     
-    def evaluate_multiple(self, houses: List[House]) -> List[Dict]:
-        """Оцінка декількох будинків"""
-        return [self.evaluate_house(house) for house in houses]
+    def _evaluate_custom_params(self, house: House, custom_params: List[Dict], custom_weights: Dict) -> Dict:
+        """
+        Оцінка кастомних параметрів
+        
+        Args:
+            house: Будинок
+            custom_params: Список кастомних параметрів
+            custom_weights: Словник з вагами для кастомних параметрів
+        
+        Returns:
+            Словник з оцінками кастомних параметрів
+        """
+        custom_scores = {}
+        
+        for param in custom_params:
+            param_name = param.get('name', '')
+            param_type = param.get('type', 'bool')
+            param_weight = custom_weights.get(f'{param_name}_weight', 5.0)
+            
+            # Отримуємо значення параметра з будинку
+            house_dict = house.to_dict()
+            param_value = house_dict.get(param_name)
+            
+            # Якщо параметр не вказано, використовуємо значення за замовчуванням
+            if param_value is None:
+                # Для булевих параметрів - False
+                if param_type == 'bool':
+                    param_value = False
+                # Для числових - 0
+                elif param_type == 'float':
+                    param_value = 0
+                # Для вибору - перший варіант
+                elif param_type == 'select':
+                    options = param.get('options', ['low', 'medium', 'high'])
+                    param_value = options[0] if options else None
+                else:
+                    param_value = None
+            
+            # Рахуємо бал залежно від типу
+            if param_type == 'bool':
+                # Булевий параметр: 1.0 якщо True, 0.0 якщо False
+                score = 1.0 if param_value else 0.0
+            elif param_type == 'float':
+                # Числовий параметр: нормалізуємо до діапазону 0-1
+                if param_value is None:
+                    score = 0.5  # Середній бал для відсутнього значення
+                else:
+                    # Для числових параметрів використовуємо нормалізацію
+                    # Можна налаштувати індивідуально для кожного параметра
+                    score = min(1.0, max(0.0, param_value / 100.0))
+            elif param_type == 'select':
+                # Параметр вибору: мапуємо опції до балів
+                options = param.get('options', ['low', 'medium', 'high'])
+                if param_value in options:
+                    score = (options.index(param_value) + 1) / len(options)
+                else:
+                    score = 0.5  # Середній бал для невідомої опції
+            else:
+                score = 0.5  # Середній бал за замовчуванням
+            
+            custom_scores[param_name] = {
+                "value": param_value,
+                "score": score,
+                "weighted": score * param_weight
+            }
+        
+        return custom_scores
     
-    def compare_houses(self, houses: List[House], sort_by: str = "final_score") -> List[Dict]:
+    def evaluate_multiple(self, houses: List[House], custom_params: Optional[List[Dict]] = None, custom_weights: Optional[Dict] = None) -> List[Dict]:
+        """Оцінка декількох будинків"""
+        return [self.evaluate_house(house, custom_params, custom_weights) for house in houses]
+    
+    def compare_houses(self, houses: List[House], sort_by: str = "final_score", custom_params: Optional[List[Dict]] = None, custom_weights: Optional[Dict] = None) -> List[Dict]:
         """
         Порівняння декількох будинків з сортуванням
         
         Args:
             houses: Список будинків
             sort_by: Поле для сортування (final_score, price, area, etc.)
+            custom_params: Список кастомних параметрів (опціонально)
+            custom_weights: Словник з кастомними вагами (опціонально)
         
         Returns:
             Відсортований список з оцінками
         """
-        evaluations = self.evaluate_multiple(houses)
+        evaluations = self.evaluate_multiple(houses, custom_params, custom_weights)
         
         # Додаємо оригінальні дані будинку
         for eval_result, house in zip(evaluations, houses):
